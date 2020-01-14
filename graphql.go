@@ -97,7 +97,11 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 		}
 	}
 
-	return graphQLErrors
+	if len(out.Errors) > 0 {
+		return graphQLErrors
+	}
+
+	return nil
 }
 
 // Errors represents the "errors" array in a response from a GraphQL server.
@@ -106,7 +110,7 @@ func (c *Client) do(ctx context.Context, op operationType, v interface{}, variab
 // Specification: https://facebook.github.io/graphql/#sec-Errors.
 type Errors []Error
 
-// Errors represents an error from the "errors" array in a response from a GraphQL server.
+// Error represents an error from the "errors" array in a response from a GraphQL server.
 type Error struct {
 	Message   string
 	Locations []struct {
@@ -117,12 +121,16 @@ type Error struct {
 
 // Error implements error interface for the Errors type.
 func (e Errors) Error() string {
+	if len(e) == 0 {
+		return "<no errors>"
+	}
+
 	return e[0].Error()
 }
 
 // Error implements error interface for the Error type.
-func (e Error) Error() string {
-	return e.Error()
+func (e *Error) Error() string {
+	return e.Message
 }
 
 type operationType uint8
